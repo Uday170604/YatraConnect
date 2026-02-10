@@ -2,8 +2,6 @@
 
 A premium Django-based booking platform for intercity sleeper bus travel, featuring real-time seat selection, meal integration, and AI-powered booking predictions.
 
-## 🚀 Live Demo
-https://uday1764.pythonanywhere.com/
 
 ## ✨ Defined Features
 1.  **Backend API Implementation**: Robust RESTful API using **Django REST Framework** with `ViewSets` and `Routers`.
