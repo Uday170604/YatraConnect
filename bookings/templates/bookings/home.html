@@ -1,0 +1,41 @@
+{% extends 'bookings/base.html' %}
+
+{% block title %}Home - SleeperConnect{% endblock %}
+
+{% block content %}
+<div class="hero" style="text-align: center; padding: 4rem 0;">
+    <h1>Experience <span class="text-gradient">Luxury Travel</span><br>Between Ahmedabad & Mumbai</h1>
+    <p
+        style="font-size: 1.2rem; color: var(--text-muted); margin: 2rem 0; max-width: 600px; margin-left: auto; margin-right: auto;">
+        Enjoy premium sleeper seats, delicious onboard meals, and seamless booking experience.
+    </p>
+
+    <div id="routes" style="margin-top: 3rem;">
+        <h2 style="margin-bottom: 2rem;">Available Routes</h2>
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; text-align: left;">
+            {% for bus in buses %}
+            <div class="glass-card" style="padding: 1.5rem;">
+                <h3 style="font-size: 1.4rem; color: var(--primary-color);">{{ bus.name }}</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                    <div>
+                        <div style="font-weight: bold; font-size: 1.1rem;">{{ bus.source }}</div>
+                        <div class="text-muted">{{ bus.departure_time|time:"H:i" }}</div>
+                    </div>
+                    <div style="color: var(--accent-color); font-size: 1.5rem;">&rarr;</div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: bold; font-size: 1.1rem;">{{ bus.destination }}</div>
+                        <div class="text-muted">{{ bus.arrival_time|time:"H:i" }}</div>
+                    </div>
+                </div>
+                <a href="{% url 'seat_selection' bus.id %}" class="btn btn-outline"
+                    style="width: 100%; justify-content: center; margin-top: 1rem;">
+                    Book Seats
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

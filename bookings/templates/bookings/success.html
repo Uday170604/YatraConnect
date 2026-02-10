@@ -1,0 +1,84 @@
+{% extends 'bookings/base.html' %}
+
+{% block title %}Booking Confirmed - SleeperConnect{% endblock %}
+
+{% block content %}
+<div class="glass-card" style="text-align: center; max-width: 800px; margin: 4rem auto;">
+    <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+    <h1 class="text-gradient">Booking Confirmed!</h1>
+    <p style="font-size: 1.2rem; margin-bottom: 2rem;">Your journey is set.</p>
+
+    {% if bookings %}
+    {% for b in bookings %}
+    <div class="ticket-card">
+        <div class="ticket-header">
+            <strong>PNR: <span class="monospace text-accent">{{ b.pnr }}</span></strong>
+        </div>
+        <div class="ticket-body">
+            <p><strong>Passenger:</strong> {{ b.passenger_name }} ({{ b.seat.seat_number }})</p>
+            <p><strong>Meal:</strong> {{ b.meal.name|default:"None" }}</p>
+            <p><strong>Prediction:</strong> {{ b.prediction_score }}%</p>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="ticket-card">
+        <div class="ticket-header">
+            <strong>PNR: <span class="monospace text-accent">{{ booking.pnr }}</span></strong>
+        </div>
+        <div class="ticket-body">
+            <p><strong>Passenger:</strong> {{ booking.passenger_name }}</p>
+            <p><strong>Seat:</strong> {{ booking.seat.seat_number }} ({{ booking.seat.get_seat_type_display }})</p>
+            <p><strong>Meal:</strong> {{ booking.meal.name|default:"None" }}</p>
+            <hr style="border-color: var(--glass-border); margin: 1rem 0;">
+            <p><strong>Total Paid:</strong> &#8377;{{ booking.total_amount }}</p>
+
+            <div class="prediction-box">
+                <strong>System Prediction:</strong>
+                <p style="font-size: 0.9rem;">Confirmation Probability: <strong>{{ booking.prediction_score }}%</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+        <a href="{% url 'my_bookings' %}" class="btn btn-outline">View My Bookings</a>
+        <a href="{% url 'home' %}" class="btn btn-primary">Book Another</a>
+    </div>
+</div>
+
+<style>
+    .ticket-card {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: left;
+        margin-bottom: 1rem;
+        border: 1px solid var(--glass-border);
+    }
+
+    .ticket-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .monospace {
+        font-family: monospace;
+        font-size: 1.2rem;
+    }
+
+    .text-accent {
+        color: var(--accent-color);
+    }
+
+    .prediction-box {
+        margin-top: 1rem;
+        padding: 0.8rem;
+        background: rgba(99, 102, 241, 0.2);
+        border-radius: 8px;
+        border: 1px solid var(--primary-color);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'bookings/base.html' %}
+
+{% block title %}Login - SleeperConnect{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+    <div class="glass-card" style="width: 100%; max-width: 400px;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Welcome Back</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                    <p style="margin: 0; font-size: 0.9rem;">Invalid username or password.</p>
+                </div>
+            {% endif %}
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="id_username">Username</label>
+                {{ form.username }}
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <label for="id_password">Password</label>
+                {{ form.password }}
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                Sign In
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

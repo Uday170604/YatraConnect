@@ -1,0 +1,50 @@
+{% extends 'bookings/base.html' %}
+
+{% block title %}My Bookings - SleeperConnect{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">My Bookings</h1>
+
+{% if bookings %}
+<div class="bookings-list" style="display: grid; gap: 1.5rem;">
+    {% for booking in bookings %}
+    <div class="glass-card"
+        style="display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 1rem;">
+        <div>
+            <h3 style="margin-bottom: 0.5rem; color: var(--primary-color);">{{ booking.passenger_name }}</h3>
+            <p class="text-muted">PNR: {{ booking.pnr }}</p>
+            <div style="margin-top: 0.5rem;">
+                <span style="background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;">
+                    Seat {{ booking.seat.seat_number }}
+                </span>
+                {% if booking.meal %}
+                <span style="background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;">
+                    Meal Included
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="text-align: right;">
+            <p style="font-weight: bold; font-size: 1.2rem;">&#8377;{{ booking.total_amount }}</p>
+            <p
+                style="color: {% if booking.status == 'CONFIRMED' %}#4ade80{% else %}#ef4444{% endif %}; font-weight: bold;">
+                {{ booking.get_status_display }}
+            </p>
+
+            {% if booking.status == 'CONFIRMED' %}
+            <a href="{% url 'cancel_booking' booking.pnr %}" class="btn btn-danger"
+                style="font-size: 0.8rem; padding: 0.5rem 1rem; margin-top: 0.5rem;"
+                onclick="return confirm('Are you sure?');">Cancel</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div style="text-align: center; padding: 4rem;">
+    <h3>No bookings found yet.</h3>
+    <a href="{% url 'seat_selection_default' %}" class="btn btn-primary" style="margin-top: 1rem;">Book a Ticket</a>
+</div>
+{% endif %}
+{% endblock %}

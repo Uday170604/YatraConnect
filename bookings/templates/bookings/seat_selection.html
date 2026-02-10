@@ -1,0 +1,199 @@
+{% extends 'bookings/base.html' %}
+{% load static %}
+
+{% block title %}Select Seats - SleeperConnect{% endblock %}
+
+{% block content %}
+<!-- REWRITE SUCCESS -->
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h1>Select Your <span class="text-gradient">Sleeper Seat</span></h1>
+    <p class="text-muted">Bus: {{ bus.name }} | {{ bus.source }} &rarr; {{ bus.destination }}</p>
+
+    {% if stops %}
+    <div
+        style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <span style="font-weight: 500; color: var(--text-muted); font-size: 0.9rem;">Via:</span>
+        {% for stop in stops %}
+        <span class="status-badge"
+            style="background: rgba(255,255,255,0.1); color: var(--text-color); border: 1px solid var(--glass-border);">
+            {{ stop.name }} <small style="opacity: 0.7;">{{ stop.arrival_time|time:"H:i" }}</small>
+        </span>
+        {% if not forloop.last %}<span style="color: var(--text-muted); font-size: 1.2rem;">&rsaquo;</span>{% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<form id="seatForm" action="{% url 'checkout_bulk' %}" method="POST">
+    {% csrf_token %}
+    <div class="bus-layout">
+        <div class="deck-container">
+            <h3>Lower Deck</h3>
+            <div class="seats-grid">
+                {% for seat in lower_deck %}
+                <div class="seat-wrapper">
+                    <!-- Fixed Input -->
+                    <input type="checkbox" name="selected_seats" value="{{ seat.id }}" id="seat-{{ seat.id }}"
+                        class="seat-checkbox" {% if seat.is_booked %}disabled{% endif %}>
+
+                    <label for="seat-{{ seat.id }}"
+                        class="seat {% if seat.is_booked %}booked{% else %}available{% endif %}"
+                        title="Seat {{ seat.seat_number }} - &#8377;{{ seat.price }}">
+                        <div class="seat-head"></div>
+                        <div class="seat-body">{{ seat.seat_number }}</div>
+                        {% if seat.is_booked %}
+                        <span class="status-icon">X</span>
+                        {% endif %}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="deck-container">
+            <h3>Upper Deck</h3>
+            <div class="seats-grid">
+                {% for seat in upper_deck %}
+                <div class="seat-wrapper">
+                    <!-- Fixed Input -->
+                    <input type="checkbox" name="selected_seats" value="{{ seat.id }}" id="seat-{{ seat.id }}"
+                        class="seat-checkbox" {% if seat.is_booked %}disabled{% endif %}>
+
+                    <label for="seat-{{ seat.id }}"
+                        class="seat {% if seat.is_booked %}booked{% else %}available{% endif %}"
+                        title="Seat {{ seat.seat_number }} - &#8377;{{ seat.price }}">
+                        <div class="seat-head"></div>
+                        <div class="seat-body">{{ seat.seat_number }}</div>
+                        {% if seat.is_booked %}
+                        <span class="status-icon">X</span>
+                        {% endif %}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <div class="selected-info">
+            <span id="selected-count">0</span> seats selected
+        </div>
+        <button type="submit" class="btn btn-primary" id="book-btn" disabled>Book Selected Seats</button>
+    </div>
+</form>
+
+<style>
+    .bus-layout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .deck-container {
+        background: var(--card-bg);
+        border: 1px solid var(--glass-border);
+        padding: 2rem;
+        border-radius: 16px;
+        min-width: 300px;
+    }
+
+    .seats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        /* 2 + 1 config style mock */
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .seat-checkbox {
+        display: none;
+    }
+
+    .seat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #334155;
+        border-radius: 8px;
+        height: 80px;
+        text-decoration: none;
+        color: white;
+        position: relative;
+        transition: transform 0.2s, background 0.2s;
+        border: 1px solid transparent;
+        cursor: pointer;
+    }
+
+    .seat-checkbox:checked+.seat {
+        background: var(--primary-color);
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        transform: scale(1.05);
+        border: 2px solid white;
+    }
+
+    .seat.booked {
+        background: #475569;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .seat.available:hover {
+        background: var(--primary-color);
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+    }
+
+    .seat-head {
+        width: 40%;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        margin-bottom: 5px;
+        border-radius: 2px;
+    }
+
+    .seat-wrapper {
+        position: relative;
+    }
+
+    .action-bar {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--card-bg);
+        border: 1px solid var(--glass-border);
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+    }
+
+    .selected-info {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+</style>
+
+<script>
+    const checkboxes = document.querySelectorAll('.seat-checkbox');
+    const countSpan = document.getElementById('selected-count');
+    const bookBtn = document.getElementById('book-btn');
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateSelection);
+    });
+
+    function updateSelection() {
+        const checkedCount = document.querySelectorAll('.seat-checkbox:checked').length;
+        countSpan.textContent = checkedCount;
+        bookBtn.disabled = checkedCount === 0;
+    }
+</script>
+{% endblock %}

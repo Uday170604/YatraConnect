@@ -1,0 +1,88 @@
+{% extends 'bookings/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Checkout V3 - SleeperConnect{% endblock %}
+
+{% block content %}
+<div class="glass-card" style="max-width: 900px; margin: 0 auto;">
+    <h2 style="margin-bottom: 2rem; text-align: center;">
+        Completing Booking for <span class="text-gradient">{{ total_seats }} Seat(s)</span>
+    </h2>
+
+    <form method="POST" action="{% url 'checkout_bulk' %}">
+        {% csrf_token %}
+        <input type="hidden" name="confirm_booking" value="true">
+
+        <div class="section-card">
+            <h3>Journey Details</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Travel Date</label>
+                    <input type="date" name="travel_date" required min="{{ today_date }}" class="form-control"
+                        value="{{ form_data.travel_date }}">
+                </div>
+                <div class="form-group">
+                    <label>Contact Email</label>
+                    <input type="email" name="email" placeholder="Email Address" required class="form-control"
+                        value="{{ form_data.email }}">
+                </div>
+                <div class="form-group">
+                    <label>Contact Phone</label>
+                    <input type="text" name="phone" placeholder="Phone Number" required class="form-control"
+                        value="{{ form_data.phone }}">
+                </div>
+            </div>
+        </div>
+
+        {% for seat in seats %}
+        <input type="hidden" name="seat_ids" value="{{ seat.id }}">
+
+        <div class="section-card seat-section">
+            <div class="seat-header">
+                <h4>Seat: <span class="text-primary">{{ seat.seat_number }}</span> ({{ seat.get_seat_type_display }})
+                </h4>
+                <span class="price-tag">&#8377;{{ seat.price }}</span>
+            </div>
+
+            <div class="form-grid">
+                <input type="text" name="name_{{ seat.id }}" placeholder="Passenger Name" required class="form-control"
+                    value="{{ seat.prev_name|default:'' }}">
+                <input type="number" name="age_{{ seat.id }}" placeholder="Age" min="1" max="100" required
+                    class="form-control" value="{{ seat.prev_age|default:'' }}">
+                <select name="gender_{{ seat.id }}" required class="form-control">
+                    <option value="">Select Gender</option>
+                    <option value="M" {% if seat.prev_gender|eq:"M" %}selected{% endif %}>Male</option>
+                    <option value="F" {% if seat.prev_gender|eq:"F" %}selected{% endif %}>Female</option>
+                    <option value="O" {% if seat.prev_gender|eq:"O" %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="meal-selection">
+                <h5>Add Meal (Optional)</h5>
+                <div class="meal-options">
+                    {% for meal in meals %}
+                    <label class="meal-card small">
+                        <input type="radio" name="meal_{{ seat.id }}" value="{{ meal.id }}" {% if seat.prev_meal|eq:meal.id %}checked{% endif %}>
+                        <div class="meal-content">
+                            <span class="meal-name">{{ meal.name }}</span>
+                            <span class="meal-price">+&#8377;{{ meal.price }}</span>
+                        </div>
+                    </label>
+                    {% endfor %}
+                    <label class="meal-card small">
+                        <input type="radio" name="meal_{{ seat.id }}" value="" {% if not seat.prev_meal %}checked{% endif %}>
+                        <div class="meal-content">
+                            <span class="meal-name">No Meal</span>
+                            <span class="meal-price">&#8377;0</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.2rem; margin-top: 1rem;">Confirm
+            Booking</button>
+    </form>
+</div>
+{% endblock %}
