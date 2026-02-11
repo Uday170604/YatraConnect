@@ -25,6 +25,3 @@ venv.bak/
 *.swp
 *.swo
 
-# Project specific
-bookings/migrations/
-!bookings/migrations/__init__.py
