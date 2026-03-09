@@ -48,7 +48,6 @@ class Seat(models.Model):
 class Meal(models.Model):
     MEAL_TYPES = (
         ('VEG', 'Vegetarian'),
-        ('NONVEG', 'Non-Vegetarian'),
         ('SNACK', 'Snacks'),
     )
     name = models.CharField(max_length=100)

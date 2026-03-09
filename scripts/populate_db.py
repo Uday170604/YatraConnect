@@ -122,8 +122,6 @@ def run():
     meals_data = [
         ('Standard Veg Thali', 'VEG', 150.00),
         ('Paneer Butter Masala Combo', 'VEG', 220.00),
-        ('Chicken Biryani', 'NONVEG', 250.00),
-        ('Egg Curry Rice', 'NONVEG', 200.00),
         ('Vada Pav & Tea', 'SNACK', 80.00),
         ('Sandwich & Coffee', 'SNACK', 120.00),
     ]

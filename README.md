@@ -8,7 +8,7 @@ A premium Django-based booking platform for intercity sleeper bus travel, featur
 2.  **Visual Seat Selection**: Interactive map distinguishing Lower (L1-L15) vs. Upper (U1-U15) deck sleeper seats.
 3.  **Smart Prediction Logic**: Mock AI algorithm calculating a "Confirmation Probability %" based on user intent signals (meal choice, group size).
 4.  **Concurrency Handling**: Prevents double-booking using Atomic Transactions and Row Locking.
-5.  **Integrated Add-ons**: Seamless meal booking (Veg/Non-Veg) affecting total fare calculation.
+5.  **Integrated Add-ons**: Seamless meal booking (Veg/Snack) affecting total fare calculation.
 
 ## 🧪 Test Cases
 ### Functional Tests
