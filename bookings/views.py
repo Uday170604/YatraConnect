@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.db import transaction
 from .models import Bus, Seat, Booking, Meal
 from .ml_utils import predict_booking_confirmation
@@ -56,35 +56,58 @@ def checkout_bulk(request):
                     raise Exception("No seats to book.")
 
                 # Phone Check
-                if phone:
-                    if not phone.isdigit() or len(phone) != 10:
-                        raise Exception("Phone number must be exactly 10 digits.")
+                    if phone:
+                        if not phone.isdigit() or len(phone) != 10:
+                            raise Exception("Phone number must be exactly 10 digits.")
 
-                for seat_id in seat_ids:
-                    name = request.POST.get(f'name_{seat_id}')
-                    age = request.POST.get(f'age_{seat_id}')
-                    gender = request.POST.get(f'gender_{seat_id}')
-                    if not name or not age or not gender:
-                        raise Exception("All passenger details are required.")
-                    
-                    # Name Validation
-                    if not re.match(r"^[a-zA-Z\s]+$", name):
-                         raise Exception(f"Invalid name '{name}'. Only letters and spaces allowed.")
+                    # Travel Date Check
+                    if travel_date_str:
+                        from datetime import datetime
+                        travel_date_obj = datetime.strptime(travel_date_str, "%Y-%m-%d").date()
+                        if travel_date_obj < timezone.now().date():
+                            raise Exception("Travel date cannot be in the past.")
+
+                    for seat_id in seat_ids:
+                        name = request.POST.get(f'name_{seat_id}')
+                        age = request.POST.get(f'age_{seat_id}')
+                        gender = request.POST.get(f'gender_{seat_id}')
+                        if not name or not age or not gender:
+                            raise Exception("All passenger details are required.")
+                        
+                        # Name Validation
+                        if not re.match(r"^[a-zA-Z\s]+$", name):
+                             raise Exception(f"Invalid name '{name}'. Only letters and spaces allowed.")
 
                 # 2. Transaction
                 with transaction.atomic():
+                    dropoff_station_id = request.POST.get('dropoff_station')
+                    dropoff_station = None
+                    if dropoff_station_id:
+                        from .models import BusStop
+                        try:
+                            dropoff_station = BusStop.objects.get(id=dropoff_station_id)
+                        except BusStop.DoesNotExist:
+                            raise Exception("Invalid drop-off station selected.")
+                            
                     for seat_id in seat_ids:
                         seat = Seat.objects.select_for_update().get(id=seat_id)
                         if seat.is_booked:
                             raise Exception(f"Seat {seat.seat_number} is already booked.")
+                            
+                        if dropoff_station and dropoff_station.bus_id != seat.bus_id:
+                            raise Exception("Selected drop-off station is invalid for this bus.")
                         
                         name = request.POST.get(f'name_{seat_id}')
                         age = request.POST.get(f'age_{seat_id}')
                         gender = request.POST.get(f'gender_{seat_id}')
                         meal_id = request.POST.get(f'meal_{seat_id}')
                         
-                        selected_meal = None
+                        # Apply Custom Station Fare Override
                         total_price = seat.price
+                        if dropoff_station and dropoff_station.fare > 0:
+                            total_price = dropoff_station.fare
+                            
+                        selected_meal = None
                         if meal_id:
                             selected_meal = Meal.objects.get(id=meal_id)
                             total_price += selected_meal.price
@@ -94,7 +117,7 @@ def checkout_bulk(request):
                             seat_count=len(seat_ids), 
                             meal_included=bool(selected_meal)
                         )
-                        
+
                         booking = Booking.objects.create(
                             passenger_name=name,
                             passenger_age=age,
@@ -103,6 +126,7 @@ def checkout_bulk(request):
                             phone=phone,
                             seat=seat,
                             meal=selected_meal,
+                            dropoff_station=dropoff_station,
                             travel_date=travel_date_str if travel_date_str else timezone.now(),
                             total_amount=total_price,
                             prediction_score=prediction_score,
@@ -136,6 +160,7 @@ def checkout_bulk(request):
                     'meals': meals,
                     'today_date': timezone.now().date().isoformat(),
                     'total_seats': len(seats),
+                    'stops': seats[0].bus.stops.all() if seats else [],
                     'form_data': request.POST, # Pass entire POST data for top-level fields
                 }
                 return render(request, 'bookings/checkout.html', context)
@@ -154,7 +179,8 @@ def checkout_bulk(request):
             'seats': seats,
             'meals': meals,
             'today_date': timezone.now().date().isoformat(),
-            'total_seats': len(seats)
+            'total_seats': len(seats),
+            'stops': seats[0].bus.stops.all() if seats else []
         }
         return render(request, 'bookings/checkout.html', context)
     
@@ -200,17 +226,6 @@ def checkout(request, seat_id):
             
             # 2. Preparation
             selected_meal = None
-            total_price = seat.price
-            
-            if meal_id:
-                selected_meal = Meal.objects.get(id=meal_id)
-                total_price += selected_meal.price
-                
-            prediction_score = predict_booking_confirmation(
-                date=travel_date_str, 
-                seat_count=1, 
-                meal_included=bool(selected_meal)
-            )
             
             # 3. Transaction
             with transaction.atomic():
@@ -218,6 +233,30 @@ def checkout(request, seat_id):
                 if seat.is_booked:
                     raise Exception("Seat just got booked!")
                 
+                dropoff_station_id = request.POST.get('dropoff_station')
+                dropoff_station = None
+                if dropoff_station_id:
+                    from .models import BusStop
+                    try:
+                        dropoff_station = BusStop.objects.get(id=dropoff_station_id, bus=seat.bus)
+                    except BusStop.DoesNotExist:
+                        raise Exception("Invalid drop-off station selected.")
+
+                # Calculate Pricing
+                total_price = seat.price
+                if dropoff_station and dropoff_station.fare > 0:
+                    total_price = dropoff_station.fare
+                    
+                if meal_id:
+                    selected_meal = Meal.objects.get(id=meal_id)
+                    total_price += selected_meal.price
+                    
+                prediction_score = predict_booking_confirmation(
+                    date=travel_date_str, 
+                    seat_count=1, 
+                    meal_included=bool(selected_meal)
+                )
+
                 booking = Booking.objects.create(
                     passenger_name=name,
                     passenger_age=age,
@@ -226,6 +265,7 @@ def checkout(request, seat_id):
                     phone=phone,
                     seat=seat,
                     meal=selected_meal,
+                    dropoff_station=dropoff_station,
                     travel_date=travel_date_str if travel_date_str else timezone.now(),
                     total_amount=total_price,
                     prediction_score=prediction_score,
@@ -257,6 +297,7 @@ def checkout(request, seat_id):
         'seats': [seat],
         'meals': meals,
         'today_date': timezone.now().date().isoformat(),
+        'stops': seat.bus.stops.all(),
         'form_data': request.POST if request.method == 'POST' else {}
     }
     return render(request, 'bookings/checkout.html', context)
@@ -297,6 +338,18 @@ def login_view(request):
     else:
         form = AuthenticationForm()
     return render(request, 'bookings/login.html', {'form': form})
+
+def signup(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Registration successful. You are now logged in.')
+            return redirect('home')
+    else:
+        form = UserCreationForm()
+    return render(request, 'bookings/signup.html', {'form': form})
 
 def logout_view(request):
     logout(request)

@@ -31,17 +31,29 @@
                     <input type="text" name="phone" placeholder="Phone Number" required class="form-control"
                         value="{{ form_data.phone }}">
                 </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Drop-off Station (Via Station)</label>
+                    <select name="dropoff_station" id="dropoff_station" required class="form-control">
+                        <option value="" data-fare="0">Select your drop-off station</option>
+                        {% for stop in stops %}
+                        <option value="{{ stop.id }}" data-fare="{{ stop.fare }}" {% if form_data.dropoff_station|stringformat:"s" == stop.id|stringformat:"s" %}selected{% endif %}>
+                            {{ stop.name }} (Arrives: {{ stop.arrival_time|time:"H:i" }})
+                            {% if stop.fare > 0 %} - Special Fare: &#8377;{{ stop.fare }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
         </div>
 
         {% for seat in seats %}
         <input type="hidden" name="seat_ids" value="{{ seat.id }}">
 
-        <div class="section-card seat-section">
+        <div class="section-card seat-section" data-seat-id="{{ seat.id }}" data-base-price="{{ seat.price }}">
             <div class="seat-header">
                 <h4>Seat: <span class="text-primary">{{ seat.seat_number }}</span> ({{ seat.get_seat_type_display }})
                 </h4>
-                <span class="price-tag">&#8377;{{ seat.price }}</span>
+                <span class="price-tag seat-price-display">&#8377;{{ seat.price }}</span>
             </div>
 
             <div class="form-grid">
@@ -61,16 +73,16 @@
                 <h5>Add Meal (Optional)</h5>
                 <div class="meal-options">
                     {% for meal in meals %}
-                    <label class="meal-card small">
-                        <input type="radio" name="meal_{{ seat.id }}" value="{{ meal.id }}" {% if seat.prev_meal|eq:meal.id %}checked{% endif %}>
+                    <label class="meal-card">
+                        <input type="radio" name="meal_{{ seat.id }}" value="{{ meal.id }}" data-price="{{ meal.price }}" {% if seat.prev_meal|eq:meal.id %}checked{% endif %}>
                         <div class="meal-content">
                             <span class="meal-name">{{ meal.name }}</span>
                             <span class="meal-price">+&#8377;{{ meal.price }}</span>
                         </div>
                     </label>
                     {% endfor %}
-                    <label class="meal-card small">
-                        <input type="radio" name="meal_{{ seat.id }}" value="" {% if not seat.prev_meal %}checked{% endif %}>
+                    <label class="meal-card">
+                        <input type="radio" name="meal_{{ seat.id }}" value="" data-price="0" {% if not seat.prev_meal %}checked{% endif %}>
                         <div class="meal-content">
                             <span class="meal-name">No Meal</span>
                             <span class="meal-price">&#8377;0</span>
@@ -85,4 +97,61 @@
             Booking</button>
     </form>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const dropoffSelect = document.getElementById("dropoff_station");
+        const seatSections = document.querySelectorAll(".seat-section");
+
+        function updatePrices() {
+            // Get selected dropoff fare
+            const selectedOption = dropoffSelect.options[dropoffSelect.selectedIndex];
+            let specialFare = 0;
+            if (selectedOption && selectedOption.dataset.fare) {
+                specialFare = parseFloat(selectedOption.dataset.fare);
+            }
+
+            // Update each seat's price
+            seatSections.forEach(section => {
+                const basePrice = parseFloat(section.dataset.basePrice);
+
+                // Determine seat base cost
+                let currentBaseCost = basePrice;
+                if (specialFare > 0) {
+                    currentBaseCost = specialFare;
+                }
+
+                // Add meal price
+                let mealPrice = 0;
+                const selectedMeal = section.querySelector('input[type="radio"]:checked');
+                if (selectedMeal && selectedMeal.dataset.price) {
+                    mealPrice = parseFloat(selectedMeal.dataset.price);
+                }
+
+                // Calculate and update display
+                const totalPrice = currentBaseCost + mealPrice;
+                const display = section.querySelector(".seat-price-display");
+                if (display) {
+                    display.innerHTML = '&#8377;' + totalPrice.toFixed(2);
+                }
+            });
+        }
+
+        // Listen for changes on dropoff selection
+        if (dropoffSelect) {
+            dropoffSelect.addEventListener("change", updatePrices);
+        }
+
+        // Listen for changes on meal radio inputs
+        seatSections.forEach(section => {
+            const mealRadios = section.querySelectorAll('input[type="radio"]');
+            mealRadios.forEach(radio => {
+                radio.addEventListener("change", updatePrices);
+            });
+        });
+
+        // Initialize prices on page load
+        updatePrices();
+    });
+</script>
 {% endblock %}

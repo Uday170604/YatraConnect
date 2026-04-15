@@ -30,6 +30,15 @@
                 Sign In
             </button>
         </form>
+        
+        <div style="text-align: center; margin-top: 1.5rem; border-top: 1px solid rgba(0, 0, 0, 0.1); padding-top: 1.5rem;">
+            <p style="margin: 0; color: var(--text-muted);">
+                Don't have an account? 
+                <a href="{% url 'signup' %}" style="color: var(--accent-color); text-decoration: none; font-weight: 500;">
+                    Sign up
+                </a>
+            </p>
+        </div>
     </div>
 </div>
 {% endblock %}

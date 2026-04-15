@@ -14,6 +14,12 @@
             <h3 style="margin-bottom: 0.5rem; color: var(--primary-color);">{{ booking.passenger_name }}</h3>
             <p class="text-muted">PNR: {{ booking.pnr }}</p>
             <div style="margin-top: 0.5rem;">
+                <p><strong>Journey:</strong> {{ booking.seat.bus.source }} &rarr; {{ booking.seat.bus.destination }}</p>
+                {% if booking.dropoff_station %}
+                <p><strong>Drop-off At:</strong> {{ booking.dropoff_station.name }} <span class="text-muted">(Arrives: {{ booking.dropoff_station.arrival_time|time:"H:i" }})</span></p>
+                {% endif %}
+                <p><strong>Travel Date:</strong> {{ booking.travel_date|date:"D, d M Y" }}</p>
+                <p><strong>Departure:</strong> {{ booking.seat.bus.departure_time|time:"H:i A" }}</p>
                 <span style="background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;">
                     Seat {{ booking.seat.seat_number }}
                 </span>

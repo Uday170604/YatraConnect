@@ -21,6 +21,7 @@ class BusStop(models.Model):
     name = models.CharField(max_length=100)
     arrival_time = models.TimeField()
     stop_number = models.IntegerField(help_text="Order of the stop")
+    fare = models.DecimalField(max_digits=6, decimal_places=2, default=0.00, help_text="Ticket fare to this station (Overrides seat price if > 0)")
 
     class Meta:
         ordering = ['stop_number']
@@ -74,17 +75,9 @@ class Booking(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=15)
     
-    seat = models.ForeignKey(Seat, on_delete=models.CASCADE) # Changed from OneToOne to allow history/re-booking
-    # Ideally booking has many seats, but assignment says "Seat booking" (singular/plural ambiguous). 
-    # Let's keep it simple: 1 Booking = 1 Seat for now, or make it cleaner.
-    # Actually, standard flow often allows multiple. But "List of seats" is a mandatory endpoint. 
-    # Let's stick to 1 booking = 1 seat for simplicity of the prompt's scope "List critical test cases...". 
-    # Wait, usually people book multiple. I'll make it ForeignKey so one User can have multiple bookings? 
-    # No, `seat = OneToOne` means one seat is associated with ONE active booking record.
-    # If I want to support multiple seats in one "Order", I would need an Order model.
-    # Given the timeframe and "Simplicity/Clarity", let's treat each seat booked as a Booking record.
-    
+    seat = models.ForeignKey(Seat, on_delete=models.CASCADE) 
     meal = models.ForeignKey(Meal, on_delete=models.SET_NULL, null=True, blank=True)
+    dropoff_station = models.ForeignKey(BusStop, on_delete=models.SET_NULL, null=True, blank=True)
     
     booking_date = models.DateTimeField(auto_now_add=True)
     travel_date = models.DateField(default=timezone.now)

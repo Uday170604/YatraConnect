@@ -25,3 +25,5 @@ venv.bak/
 *.swp
 *.swo
 
+# Static Files
+staticfiles/

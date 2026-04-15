@@ -13,6 +13,7 @@ urlpatterns = [
     path('seats/<int:bus_id>/', views.seat_selection, name='seat_selection'),
     path('seats/', views.seat_selection, name='seat_selection_default'), # Fallback
     path('login/', views.login_view, name='login'),
+    path('signup/', views.signup, name='signup'),
     path('logout/', views.logout_view, name='logout'),
     path('checkout/bulk/', views.checkout_bulk, name='checkout_bulk'),
     path('checkout/<int:seat_id>/', views.checkout, name='checkout'),
