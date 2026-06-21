@@ -40,3 +40,6 @@ A premium Django-based booking platform for intercity sleeper bus travel, featur
     python manage.py runserver
     ```
 
+<img width="940" height="467" alt="image" src="https://github.com/user-attachments/assets/79603bd7-759f-42d8-bed5-2eb9101fe8e7" />
+<img width="940" height="467" alt="image" src="https://github.com/user-attachments/assets/4cd6b833-5a1a-4b4f-b305-eba76d8d91f6" />
+<img width="940" height="465" alt="image" src="https://github.com/user-attachments/assets/6076a2b5-a14b-43ab-9212-da9356541579" />
